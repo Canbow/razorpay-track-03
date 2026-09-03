@@ -23,6 +23,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import ThreeVisualizer from '@/components/ThreeVisualizer';
+import RecoveryComparisonChart from '@/components/RecoveryComparisonChart';
 import CheckoutModal from '@/components/CheckoutModal';
 import WhatsAppModal from '@/components/WhatsAppModal';
 import { BenchmarkKPIs, ProcessedEvent, AuditRecord, SimulateRequest, SimulateResponse } from '@/lib/types';
@@ -260,9 +261,6 @@ export default function DashboardPage() {
                 <span className="font-bold text-xl text-white tracking-wide">
                   Razorpay <span className="text-brand-cyan">RecoveryAI</span>
                 </span>
-                <span className="px-2 py-0.5 text-[11px] rounded-full bg-brand-blue/20 text-brand-cyan border border-brand-blue/30 font-semibold font-mono">
-                  Next.js + Three.js
-                </span>
               </div>
               <p className="text-xs text-slate-400">
                 Autonomous AI Dunning, Dynamic Multi-Rail Routing & Guardrails
@@ -294,22 +292,13 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            {/* Toggle 3D visualizer */}
-            <button
-              onClick={() => setShow3DCanvas(!show3DCanvas)}
-              className="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold flex items-center space-x-1.5 transition"
-            >
-              <Layers className="w-4 h-4 text-brand-cyan" />
-              <span>{show3DCanvas ? 'Hide 3D View' : 'Show 3D View'}</span>
-            </button>
-
             {/* Sync button */}
             <button
               onClick={fetchBackendData}
-              className="px-3 py-1.5 rounded-xl bg-brand-blue/20 hover:bg-brand-blue/30 text-brand-cyan border border-brand-blue/40 text-xs font-semibold flex items-center space-x-1.5 transition"
+              className="px-3 py-1.5 rounded-xl bg-brand-blue/20 hover:bg-brand-blue/30 text-brand-cyan border border-brand-blue/40 text-xs font-semibold flex items-center space-x-1.5 transition shadow-sm"
             >
               <RotateCw className="w-3.5 h-3.5" />
-              <span>Sync Agent</span>
+              <span>Sync Pipeline</span>
             </button>
           </div>
         </div>
@@ -689,60 +678,14 @@ export default function DashboardPage() {
 
         {/* Strategy Comparison & Category Recovery Stats (7 cols) */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Comparison Cards */}
-          <div className="glass-panel rounded-xl p-5 border border-brand-border space-y-3">
-            <h2 className="text-base font-semibold text-white flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-              <span>Strategy Comparison: Naive Retries vs. Autonomous AI Agent</span>
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 space-y-1">
-                <div className="font-semibold text-rose-400 text-xs">Baseline Dumb Retry Policy</div>
-                <div className="text-xl font-bold text-white">₹{kpis.baseline_recovered.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                <div className="text-[11px] text-slate-400">
-                  {kpis.baseline_percentage}% recovery. 13 nocturnal spam violations; hammered failing bank CBS.
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-1">
-                <div className="font-semibold text-emerald-400 text-xs">Autonomous AI Recovery Engine</div>
-                <div className="text-xl font-bold text-emerald-400">₹{kpis.total_recovered.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                <div className="text-[11px] text-emerald-300 font-medium">
-                  {kpis.recovery_percentage}% recovery (+₹{kpis.net_uplift.toLocaleString('en-IN', { minimumFractionDigits: 2 })} uplift). 0 double debits.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Root-cause category recovery rates */}
-          <div className="glass-panel rounded-xl p-5 border border-brand-border space-y-3">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Cohort Diagnostic Breakdown & Strategy
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-              <div className="p-3 rounded-lg bg-slate-900/70 border border-slate-800">
-                <div className="text-slate-400 text-[11px]">Transient Outages</div>
-                <div className="text-lg font-bold text-emerald-400 mt-1">89.8%</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">Off-Peak Silent (+12h)</div>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-900/70 border border-slate-800">
-                <div className="text-slate-400 text-[11px]">Customer Actionable</div>
-                <div className="text-lg font-bold text-purple-400 mt-1">59.0%</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">UPI Intent Link</div>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-900/70 border border-slate-800">
-                <div className="text-slate-400 text-[11px]">Exhausted Retries</div>
-                <div className="text-lg font-bold text-amber-400 mt-1">0.0%</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">100% Safely Stopped</div>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-900/70 border border-slate-800">
-                <div className="text-slate-400 text-[11px]">Terminal Failures</div>
-                <div className="text-lg font-bold text-rose-400 mt-1">0.0%</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">100% Safely Dropped</div>
-              </div>
-            </div>
-          </div>
+          <RecoveryComparisonChart
+            baselineRecovered={kpis.baseline_recovered}
+            aiRecovered={kpis.total_recovered}
+            totalAtRisk={kpis.total_at_risk}
+            baselinePercentage={kpis.baseline_percentage}
+            aiPercentage={kpis.recovery_percentage}
+            netUplift={kpis.net_uplift}
+          />
 
           {/* Differentiators Table */}
           <div className="glass-panel rounded-xl p-4 border border-brand-border text-xs overflow-x-auto">
