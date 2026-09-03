@@ -307,7 +307,7 @@ export default function DashboardPage() {
       {/* 3D Three.js Payment Rail Topology Visualizer */}
       {show3DCanvas && (
         <section className="animate-in fade-in duration-300">
-          <ThreeVisualizer className="shadow-2xl" />
+          <ThreeVisualizer kpis={kpis} className="shadow-2xl" />
         </section>
       )}
 

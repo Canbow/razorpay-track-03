@@ -2,16 +2,19 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Layers, Network, ShieldCheck, CheckCircle, ArrowRight, Clock, Smartphone, AlertOctagon, Terminal } from 'lucide-react';
+import { Layers, Network, ShieldCheck, CheckCircle, BarChart3, ArrowRight, Clock, Smartphone, AlertOctagon, Terminal } from 'lucide-react';
+import RecoveryComparisonChart from './RecoveryComparisonChart';
+import { BenchmarkKPIs } from '@/lib/types';
 
 interface ThreeVisualizerProps {
   activeNode?: string | null;
   className?: string;
+  kpis?: BenchmarkKPIs;
 }
 
-export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVisualizerProps) {
-  // Mode: '2D_GRAPH' (recommended flow graph) or '3D_TOPOLOGY'
-  const [viewMode, setViewMode] = useState<'2D_GRAPH' | '3D_TOPOLOGY'>('2D_GRAPH');
+export default function ThreeVisualizer({ activeNode, className = '', kpis }: ThreeVisualizerProps) {
+  // Mode: 'BAR_CHART' (Default visual 2D bar chart), '2D_FLOW' (4-stage node graph), or '3D_TOPOLOGY'
+  const [viewMode, setViewMode] = useState<'BAR_CHART' | '2D_FLOW' | '3D_TOPOLOGY'>('BAR_CHART');
   const [active2DStage, setActive2DStage] = useState<string>('DIAGNOSE');
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -189,7 +192,7 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
     let prevMouseY = 0;
     let rotationAngleY = 0.5;
     let rotationAngleX = 0.35;
-    let cameraRadius = 46; // Fixed constant orbit distance!
+    let cameraRadius = 46;
 
     const handleMouseDown = (e: MouseEvent) => {
       isDragging = true;
@@ -202,7 +205,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
         const deltaX = e.clientX - prevMouseX;
         const deltaY = e.clientY - prevMouseY;
         rotationAngleY += deltaX * 0.005;
-        // Strictly clamp pitch between -0.4 and 0.8 radians so camera NEVER looks directly down the pole
         rotationAngleX = Math.max(-0.35, Math.min(0.75, rotationAngleX + deltaY * 0.005));
         prevMouseX = e.clientX;
         prevMouseY = e.clientY;
@@ -215,7 +217,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      // Adjust cameraRadius strictly between 30 and 70
       cameraRadius = Math.max(30, Math.min(70, cameraRadius + e.deltaY * 0.04));
     };
 
@@ -232,18 +233,15 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
       animationFrameId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
 
-      // Slow idle auto-rotation
       if (isAutoRotate && !isDragging) {
         rotationAngleY += 0.0018;
       }
 
-      // Compute camera position using fixed spherical coordinates
       camera.position.x = cameraRadius * Math.sin(rotationAngleY) * Math.cos(rotationAngleX);
       camera.position.y = cameraRadius * Math.sin(rotationAngleX) + 3;
       camera.position.z = cameraRadius * Math.cos(rotationAngleY) * Math.cos(rotationAngleX);
       camera.lookAt(0, 0, 0);
 
-      // Core rotation & gentle pulse
       coreMesh.rotation.y = elapsedTime * 0.3;
       coreMesh.rotation.x = elapsedTime * 0.15;
       wireMesh.rotation.y = -elapsedTime * 0.25;
@@ -253,7 +251,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
       const pulseScale = 1 + Math.sin(elapsedTime * 2.5) * 0.025;
       coreMesh.scale.set(pulseScale, pulseScale, pulseScale);
 
-      // Particles flow along splines
       particleGeos.forEach((p) => {
         p.t += p.speed;
         if (p.t > 1) p.t = 0;
@@ -294,33 +291,48 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
 
   return (
     <div className={`glass-panel rounded-2xl p-5 border border-brand-border/80 relative overflow-hidden ${className}`}>
-      {/* Visualizer Header with 2D / 3D Mode Selector */}
+      {/* Visualizer Header with 3-Mode Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center space-x-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-blue to-brand-cyan flex items-center justify-center text-white font-bold">
-            <Network className="w-4 h-4" />
+            {viewMode === 'BAR_CHART' ? <BarChart3 className="w-4 h-4" /> : <Network className="w-4 h-4" />}
           </div>
           <div>
             <h2 className="text-base font-semibold text-white flex items-center space-x-2">
-              <span>Autonomous Decision Routing Engine</span>
+              <span>
+                {viewMode === 'BAR_CHART' && 'Financial Recovery Comparison Charts'}
+                {viewMode === '2D_FLOW' && 'Autonomous Decision Routing Engine'}
+                {viewMode === '3D_TOPOLOGY' && '3D Payment Rail Topology Mesh'}
+              </span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono">
                 LIVE
               </span>
             </h2>
             <p className="text-xs text-slate-400">
-              {viewMode === '2D_GRAPH'
-                ? 'Interactive 2D Financial Flow Graph: Ingestion → Diagnosis → Guardrails → Multi-Rail Execution'
-                : 'Three.js 3D Financial Network Topology: Orbiting Switches & Active Spline Streams'}
+              {viewMode === 'BAR_CHART' && '2D Visual Bar Charts: Naive Retries (6.4%) vs. Autonomous AI Engine (61.8%)'}
+              {viewMode === '2D_FLOW' && 'Interactive 2D Decision Flow Graph: Ingestion → Diagnosis → Guardrails → Multi-Rail Execution'}
+              {viewMode === '3D_TOPOLOGY' && 'Three.js 3D Financial Network Topology: Orbiting Switches & Active Spline Streams'}
             </p>
           </div>
         </div>
 
-        {/* View Mode Toggle Buttons */}
-        <div className="flex items-center space-x-2 bg-slate-900/90 p-1 rounded-xl border border-slate-700/80 self-start sm:self-auto">
+        {/* 3-Way Mode Toggle Buttons */}
+        <div className="flex items-center space-x-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-700/80 self-start sm:self-auto">
           <button
-            onClick={() => setViewMode('2D_GRAPH')}
+            onClick={() => setViewMode('BAR_CHART')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
-              viewMode === '2D_GRAPH'
+              viewMode === 'BAR_CHART'
+                ? 'bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span>2D Bar Charts</span>
+          </button>
+          <button
+            onClick={() => setViewMode('2D_FLOW')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
+              viewMode === '2D_FLOW'
                 ? 'bg-gradient-to-r from-brand-blue to-brand-cyan text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
             }`}
@@ -337,17 +349,29 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
             }`}
           >
             <Network className="w-3.5 h-3.5" />
-            <span>3D Topology Mesh</span>
+            <span>3D Topology</span>
           </button>
         </div>
       </div>
 
-      {/* VIEW MODE 1: INTERACTIVE 2D FINANCIAL FLOW GRAPH (ROCK SOLID, CLEAN, HIGH-SIGNAL) */}
-      {viewMode === '2D_GRAPH' && (
-        <div className="space-y-4">
-          {/* Visual Node Graph Grid */}
+      {/* VIEW MODE 1: VISUAL 2D FINANCIAL RECOVERY BAR CHARTS (DEFAULT) */}
+      {viewMode === 'BAR_CHART' && (
+        <div className="animate-in fade-in duration-300">
+          <RecoveryComparisonChart
+            baselineRecovered={kpis?.baseline_recovered || 16700}
+            aiRecovered={kpis?.total_recovered || 162300}
+            totalAtRisk={kpis?.total_at_risk || 262800}
+            baselinePercentage={kpis?.baseline_percentage || 6.4}
+            aiPercentage={kpis?.recovery_percentage || 61.8}
+            netUplift={kpis?.net_uplift || 145600}
+          />
+        </div>
+      )}
+
+      {/* VIEW MODE 2: INTERACTIVE 2D DECISION FLOW GRAPH */}
+      {viewMode === '2D_FLOW' && (
+        <div className="space-y-4 animate-in fade-in duration-300">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 relative">
-            {/* Stage 1: Diagnosis */}
             <div
               onClick={() => setActive2DStage('DIAGNOSE')}
               className={`p-4 rounded-xl border cursor-pointer transition ${
@@ -362,9 +386,7 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
                 </span>
                 <span className="w-2 h-2 rounded-full bg-blue-400" />
               </div>
-              <div className="font-bold text-white text-sm mb-1 flex items-center space-x-1.5">
-                <span>diagnose_node</span>
-              </div>
+              <div className="font-bold text-white text-sm mb-1">diagnose_node</div>
               <p className="text-xs text-slate-400 mb-3">
                 Inspects error code & classifies into 4 deterministic operational cohorts.
               </p>
@@ -381,7 +403,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
               </div>
             </div>
 
-            {/* Stage 2: Policy Guardrails */}
             <div
               onClick={() => setActive2DStage('GUARD')}
               className={`p-4 rounded-xl border cursor-pointer transition ${
@@ -396,9 +417,7 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
                 </span>
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
               </div>
-              <div className="font-bold text-white text-sm mb-1 flex items-center space-x-1.5">
-                <span>policy_guard_node</span>
-              </div>
+              <div className="font-bold text-white text-sm mb-1">policy_guard_node</div>
               <p className="text-xs text-slate-400 mb-3">
                 Evaluates 3 non-negotiable deterministic safety gates before any side effect.
               </p>
@@ -415,7 +434,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
               </div>
             </div>
 
-            {/* Stage 3: Autonomous Multi-Rail Execution */}
             <div
               onClick={() => setActive2DStage('EXECUTION')}
               className={`p-4 rounded-xl border cursor-pointer transition ${
@@ -430,9 +448,7 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
                 </span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
               </div>
-              <div className="font-bold text-white text-sm mb-1 flex items-center space-x-1.5">
-                <span>execution_node</span>
-              </div>
+              <div className="font-bold text-white text-sm mb-1">execution_node</div>
               <p className="text-xs text-slate-400 mb-3">
                 Sequences optimal recovery rail based on classified root-cause failure.
               </p>
@@ -449,7 +465,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
               </div>
             </div>
 
-            {/* Stage 4: Microsecond Audit Log */}
             <div
               onClick={() => setActive2DStage('AUDIT')}
               className={`p-4 rounded-xl border cursor-pointer transition ${
@@ -464,9 +479,7 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
                 </span>
                 <Terminal className="w-3.5 h-3.5 text-purple-400" />
               </div>
-              <div className="font-bold text-white text-sm mb-1 flex items-center space-x-1.5">
-                <span>audit_logger</span>
-              </div>
+              <div className="font-bold text-white text-sm mb-1">audit_logger</div>
               <p className="text-xs text-slate-400 mb-3">
                 Thread-safe immutable JSONL audit recording every transition microsecond-by-microsecond.
               </p>
@@ -484,7 +497,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
             </div>
           </div>
 
-          {/* Dynamic Explanatory Strip for Selected Stage */}
           <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 rounded-lg bg-brand-blue/20 text-brand-cyan flex items-center justify-center font-bold">
@@ -516,12 +528,11 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
         </div>
       )}
 
-      {/* VIEW MODE 2: FIXED 3D THREE.JS TOPOLOGY MESH (PERFECTLY SMOOTH ORBIT, NO ZOOM SINK) */}
+      {/* VIEW MODE 3: FIXED 3D THREE.JS TOPOLOGY MESH */}
       {viewMode === '3D_TOPOLOGY' && (
-        <div className="relative w-full h-[440px] rounded-xl overflow-hidden bg-slate-950/60 border border-slate-800">
+        <div className="relative w-full h-[440px] rounded-xl overflow-hidden bg-slate-950/60 border border-slate-800 animate-in fade-in duration-300">
           <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-          {/* 3D Controls Overlay */}
           <div className="absolute top-3 left-3 z-10 flex items-center space-x-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700/80 text-xs">
             <div className="w-2 h-2 rounded-full bg-brand-cyan animate-pulse" />
             <span className="font-semibold text-white">Three.js 3D Topology</span>
@@ -537,7 +548,6 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
             </button>
           </div>
 
-          {/* 3D Legend Strip */}
           <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-wrap items-center justify-between gap-2 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800 text-[11px]">
             <div className="flex items-center space-x-3">
               <span className="flex items-center space-x-1">
@@ -566,3 +576,4 @@ export default function ThreeVisualizer({ activeNode, className = '' }: ThreeVis
     </div>
   );
 }
+
