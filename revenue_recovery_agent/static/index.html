@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Razorpay AI Revenue Recovery Engine — Autonomous Agent Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#070F1E',
+              card: '#0D1A30',
+              border: '#1E293B',
+              blue: '#0082FF',
+              cyan: '#00B9F1',
+              emerald: '#10B981',
+              amber: '#F59E0B',
+              rose: '#F43F5E',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse-border {
+      0%, 100% { border-color: rgba(0, 130, 255, 0.4); box-shadow: 0 0 15px rgba(0, 130, 255, 0.2); }
+      50% { border-color: rgba(0, 185, 241, 0.9); box-shadow: 0 0 25px rgba(0, 185, 241, 0.4); }
+    }
+    .node-active { animation: pulse-border 2s infinite ease-in-out; }
+    .glass-panel { background: rgba(13, 26, 48, 0.85); backdrop-filter: blur(12px); border: 1px solid #1E293B; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #070F1E; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="bg-brand-dark text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-blue selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-brand-border glass-panel sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-blue to-brand-cyan flex items-center justify-center shadow-lg shadow-brand-blue/30">
+          <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-lg text-white tracking-wide">Razorpay <span class="text-brand-cyan">RecoveryAI</span></span>
+          </div>
+          <p class="text-xs text-slate-400">Autonomous Dunning & Multi-Rail Retry Sequencer</p>
+        </div>
+      </div>
+
+      <!-- Live Clock & Status Badge -->
+      <div class="flex items-center space-x-4">
+        <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">
+          <div id="traiDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+          <span class="text-xs text-slate-200 font-mono font-semibold tracking-wider" id="liveClock">--:--:-- IST</span>
+          <span id="traiBadge" class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">TRAI Compliant Hours (08:00–20:00)</span>
+        </div>
+        <button onclick="runLiveStressTest()" id="stressTestBtn" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-bolt" id="stressTestIcon"></i>
+          <span>Live 60-Tx Stress Test</span>
+        </button>
+        <button onclick="refreshData()" class="px-3 py-1.5 rounded-lg bg-brand-blue/20 hover:bg-brand-blue/30 text-brand-cyan border border-brand-blue/40 text-xs font-medium transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i>
+          <span>Sync Pipeline</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- KPI Summary Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="glass-panel rounded-xl p-4 border border-brand-border relative overflow-hidden">
+        <div class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total at Risk</div>
+        <div class="text-2xl font-bold text-white mt-1" id="kpiAtRisk">₹2,62,800</div>
+        <div class="text-xs text-slate-400 mt-2 flex items-center space-x-1">
+          <span class="text-slate-200 font-semibold" id="kpiTxCount">60</span> transactions ingested
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-4 border border-emerald-500/30 relative overflow-hidden bg-gradient-to-b from-emerald-500/5 to-transparent">
+        <div class="text-xs text-emerald-400 font-medium uppercase tracking-wider">AI Recovered Revenue</div>
+        <div class="text-2xl font-bold text-emerald-400 mt-1" id="kpiRecovered">₹1,62,300</div>
+        <div class="text-xs text-emerald-400/90 mt-2 flex items-center space-x-1 font-medium">
+          <i class="fa-solid fa-arrow-trend-up"></i>
+          <span id="kpiRecoveryPct">61.8%</span> recovery conversion
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-4 border border-brand-cyan/30 relative overflow-hidden bg-gradient-to-b from-brand-cyan/5 to-transparent">
+        <div class="text-xs text-brand-cyan font-medium uppercase tracking-wider">Net Incremental Uplift</div>
+        <div class="text-2xl font-bold text-brand-cyan mt-1" id="kpiUplift">+₹1,45,600</div>
+        <div class="text-xs text-slate-400 mt-2">
+          vs. Naive Retries (<span id="kpiBaselinePct" class="text-rose-400 font-medium">6.4%</span>)
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-4 border border-brand-border relative overflow-hidden">
+        <div class="text-xs text-slate-400 font-medium uppercase tracking-wider">Double-Debit Guard</div>
+        <div class="text-2xl font-bold text-white mt-1 flex items-center space-x-1.5">
+          <span>0</span>
+          <span class="text-xs text-emerald-400 font-medium px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30">100% Guarded</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-2">Atomic Idempotency Lock</div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-4 border border-brand-border relative overflow-hidden">
+        <div class="text-xs text-slate-400 font-medium uppercase tracking-wider">TRAI Compliance</div>
+        <div class="text-2xl font-bold text-white mt-1 flex items-center space-x-1.5">
+          <span>0 Violations</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-2">
+          <span class="text-rose-400 font-medium">13 stopped</span> in naive baseline
+        </div>
+      </div>
+    </div>
+
+    <!-- Merchant Operational Efficiency & Involuntary Churn Strip -->
+    <div class="glass-panel rounded-xl p-3 px-5 border border-brand-border/80 bg-slate-900/40 flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div class="flex items-center space-x-2">
+        <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Involuntary Churn Rescued</span>
+          <span class="font-bold text-white text-sm">34 Subscribers Rescued</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <div class="w-7 h-7 rounded-lg bg-brand-cyan/20 text-brand-cyan flex items-center justify-center font-bold">
+          <i class="fa-solid fa-piggy-bank"></i>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Gateway Attempt Fees Saved</span>
+          <span class="font-bold text-white text-sm">₹3,150.00 Saved</span> <span class="text-[10px] text-slate-400">(15 terminal loops killed)</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <div class="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-gauge-high"></i>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Avg Agent Latency</span>
+          <span class="font-bold text-white text-sm">185 ms / transaction</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Operational ROI</span>
+          <span class="font-bold text-white text-sm">18.2x Return on Recovery</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive LangGraph State Machine Visualizer -->
+    <div class="glass-panel rounded-xl p-5 border border-brand-border">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-diagram-project text-brand-cyan"></i>
+            <span>LangGraph Closed-Loop State Machine Visualizer</span>
+          </h2>
+          <p class="text-xs text-slate-400">Deterministic routing: Diagnosis &rarr; Guardrails &rarr; Dynamic Execution</p>
+        </div>
+        <div class="flex items-center space-x-2 text-xs">
+          <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><span class="text-slate-400">Diagnosis</span></span>
+          <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span class="text-slate-400">Guardrails</span></span>
+          <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span class="text-slate-400">Execution</span></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+        <!-- Node 1 -->
+        <div class="glass-panel rounded-xl p-4 border border-blue-500/30 bg-blue-950/20 relative" id="nodeDiagnose">
+          <div class="flex items-center justify-between text-xs text-blue-400 font-semibold mb-2">
+            <span>NODE 1</span>
+            <i class="fa-solid fa-microchip"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">diagnose_node</h3>
+          <p class="text-xs text-slate-400 mt-1">Classifies error codes into Transient Downtime, Customer Actionable, or Terminal.</p>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-300">
+            <div class="flex justify-between py-0.5"><span>Transient:</span><span class="font-mono text-cyan-400">25 recs</span></div>
+            <div class="flex justify-between py-0.5"><span>Actionable:</span><span class="font-mono text-purple-400">20 recs</span></div>
+            <div class="flex justify-between py-0.5"><span>Terminal/Limit:</span><span class="font-mono text-rose-400">15 recs</span></div>
+          </div>
+        </div>
+
+        <!-- Node 2 -->
+        <div class="glass-panel rounded-xl p-4 border border-amber-500/30 bg-amber-950/20 relative" id="nodeGuard">
+          <div class="flex items-center justify-between text-xs text-amber-400 font-semibold mb-2">
+            <span>NODE 2</span>
+            <i class="fa-solid fa-gavel"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">policy_guard_node</h3>
+          <p class="text-xs text-slate-400 mt-1">Evaluates Idempotency Lock, Max Retries &lt; 2, and 08:00–20:00 IST contact window.</p>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-300">
+            <div class="flex justify-between py-0.5"><span>Max Retry Limit:</span><span class="font-mono text-amber-300">Hard stop = 2</span></div>
+            <div class="flex justify-between py-0.5"><span>TRAI Window:</span><span class="font-mono text-emerald-400">08:00-20:00</span></div>
+            <div class="flex justify-between py-0.5"><span>Idempotency:</span><span class="font-mono text-cyan-300">Lock Check</span></div>
+          </div>
+        </div>
+
+        <!-- Node 3 -->
+        <div class="glass-panel rounded-xl p-4 border border-emerald-500/30 bg-emerald-950/20 relative" id="nodeExecution">
+          <div class="flex items-center justify-between text-xs text-emerald-400 font-semibold mb-2">
+            <span>NODE 3</span>
+            <i class="fa-solid fa-bolt"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">execution_node</h3>
+          <p class="text-xs text-slate-400 mt-1">Executes silent off-peak cooldown (+12h) or dispatches dynamic UPI Intent link.</p>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-300">
+            <div class="flex justify-between py-0.5"><span>Silent Retry:</span><span class="font-mono text-emerald-400">89.8% Rec.</span></div>
+            <div class="flex justify-between py-0.5"><span>Dynamic Link:</span><span class="font-mono text-purple-400">59.0% Rec.</span></div>
+            <div class="flex justify-between py-0.5"><span>Terminal Abort:</span><span class="font-mono text-rose-400">100% Dropped</span></div>
+          </div>
+        </div>
+
+        <!-- Node 4 -->
+        <div class="glass-panel rounded-xl p-4 border border-purple-500/30 bg-purple-950/20 relative" id="nodeAudit">
+          <div class="flex items-center justify-between text-xs text-purple-400 font-semibold mb-2">
+            <span>AUDIT TRAIL</span>
+            <i class="fa-solid fa-file-shield"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">AuditLogger (JSONL)</h3>
+          <p class="text-xs text-slate-400 mt-1">Appends immutable microsecond traces to recovery_audit_trail.jsonl for compliance.</p>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-300">
+            <div class="flex justify-between py-0.5"><span>Invariant:</span><span class="font-mono text-emerald-400">Conserved</span></div>
+            <div class="flex justify-between py-0.5"><span>Precision:</span><span class="font-mono text-purple-300">Microsecond</span></div>
+            <div class="flex justify-between py-0.5"><span>Double Debits:</span><span class="font-mono text-cyan-300">0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Simulation & Visual Analytics Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Interactive Webhook Simulator (5 Cols) -->
+      <div class="lg:col-span-5 glass-panel rounded-xl p-5 border border-brand-border">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-flask-vial text-brand-blue"></i>
+            <span>Interactive Webhook Simulator</span>
+          </h2>
+          <span class="text-xs text-brand-cyan bg-brand-blue/10 px-2 py-0.5 rounded border border-brand-blue/20">Live Evaluation</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-4">Simulate an incoming failure webhook to test agent diagnosis, guardrails, and dynamic fallback.</p>
+
+        <form id="simForm" onsubmit="handleSimulate(event)" class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 mb-1">Invoice ID</label>
+              <input type="text" id="simInvoiceId" value="INV-LIVE-9001" class="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-brand-blue outline-none">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Customer ID</label>
+              <input type="text" id="simCustomerId" value="CUST-LIVE-101" class="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-brand-blue outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 mb-1">Amount (₹ INR)</label>
+              <input type="number" id="simAmount" value="4500" class="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-brand-blue outline-none">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Failed Rail</label>
+              <select id="simRail" class="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white outline-none">
+                <option value="CARD">CARD</option>
+                <option value="MANDATE">MANDATE</option>
+                <option value="NETBANKING">NETBANKING</option>
+                <option value="UPI">UPI</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1">Error Code</label>
+            <select id="simErrorCode" onchange="updateErrorDesc()" class="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white outline-none font-mono">
+              <optgroup label="Transient Downtime (Scheduled Silent Retry)">
+                <option value="GATEWAY_TIMEOUT">GATEWAY_TIMEOUT (Bank timeout)</option>
+                <option value="ISSUER_DOWN">ISSUER_DOWN (Core bank switch down)</option>
+                <option value="NETWORK_ERROR">NETWORK_ERROR (NPCI network error)</option>
+              </optgroup>
+              <optgroup label="Customer Actionable (Dynamic UPI Link)">
+                <option value="INSUFFICIENT_FUNDS">INSUFFICIENT_FUNDS (Account depleted)</option>
+                <option value="AUTH_FAILED">AUTH_FAILED (OTP / 3DS auth failed)</option>
+                <option value="EXPIRED_MANDATE">EXPIRED_MANDATE (Mandate expired)</option>
+              </optgroup>
+              <optgroup label="Terminal Failure (Graceful Abort)">
+                <option value="ACCOUNT_CLOSED">ACCOUNT_CLOSED (Account closed)</option>
+                <option value="FRAUD_BLOCK">FRAUD_BLOCK (Risk block triggered)</option>
+                <option value="INVALID_ACCOUNT">INVALID_ACCOUNT (Invalid IFSC/A/C)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="block text-slate-400 mb-1">Prior Attempts: <span id="attemptCountVal" class="text-white font-mono font-bold">0</span></label>
+              <input type="range" id="simAttemptCount" min="0" max="3" value="0" oninput="document.getElementById('attemptCountVal').innerText=this.value" class="w-full accent-brand-blue">
+              <div class="text-[10px] text-slate-500 flex justify-between"><span>0</span><span>1</span><span class="text-amber-400">2 (Max)</span><span>3</span></div>
+            </div>
+
+            <div>
+              <label class="block text-slate-400 mb-1">Mock IST Hour: <span id="simHourVal" class="text-white font-mono font-bold">14:00</span></label>
+              <input type="range" id="simHour" min="0" max="23" value="14" oninput="updateHourDisplay(this.value)" class="w-full accent-brand-blue">
+              <div class="text-[10px] text-slate-500 flex justify-between"><span class="text-rose-400">02:00</span><span class="text-emerald-400">14:00</span><span class="text-rose-400">22:00</span></div>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 pt-1">
+            <input type="checkbox" id="simIsLocked" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-brand-blue focus:ring-0">
+            <label for="simIsLocked" class="text-slate-300 select-none">Simulate Active Concurrency Lock (<span class="text-amber-400">Test Double-Debit Guard</span>)</label>
+          </div>
+
+          <button type="submit" id="simBtn" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-brand-blue to-brand-cyan hover:opacity-95 text-white font-semibold text-xs transition shadow-lg shadow-brand-blue/20 flex items-center justify-center space-x-2 mt-2">
+            <i class="fa-solid fa-play"></i>
+            <span>Execute AI Recovery Agent</span>
+          </button>
+        </form>
+
+        <!-- Simulation Result Card -->
+        <div id="simResultBox" class="hidden mt-4 p-3.5 rounded-lg bg-slate-900/90 border border-slate-700 space-y-2 text-xs">
+          <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <span class="font-bold text-white flex items-center space-x-1.5">
+              <span id="simResultIcon"></span>
+              <span>Agent Verdict</span>
+            </span>
+            <span id="simResultStatusBadge" class="px-2 py-0.5 rounded text-[11px] font-semibold font-mono"></span>
+          </div>
+          <div class="space-y-1.5 pt-1">
+            <div class="flex justify-between"><span class="text-slate-400">Category:</span><span id="simResCategory" class="font-mono text-white"></span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Guardrails:</span><span id="simResGuard" class="font-mono"></span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Action Plan:</span><span id="simResAction" class="font-mono text-cyan-300"></span></div>
+            <div id="simResFallbackRow" class="hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1 border-t border-slate-800">
+              <div>
+                <span class="text-slate-400 block">Fallback Dynamic Link:</span>
+                <a id="simResLink" href="#" target="_blank" class="text-brand-cyan underline font-mono text-[11px] truncate max-w-[220px] block"></a>
+              </div>
+              <button type="button" onclick="openCheckoutModal()" class="px-3 py-1.5 rounded-lg bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30 hover:bg-brand-cyan/30 font-semibold text-xs flex items-center space-x-1.5 self-start sm:self-auto transition shadow-sm">
+                <i class="fa-solid fa-mobile-screen"></i>
+                <span>Preview Customer Checkout</span>
+              </button>
+            </div>
+
+            <!-- Nocturnal Smart Queue Card -->
+            <div id="simResNightQueueRow" class="hidden p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+              <div class="font-bold flex items-center space-x-1.5 text-amber-400">
+                <i class="fa-solid fa-moon"></i>
+                <span>Nocturnal Anti-Spam Guardrail: Dispatch Queued</span>
+              </div>
+              <p class="text-[11px] text-slate-300 mt-1">Active customer outreach held until <strong>08:01 AM IST</strong>. Wakes customer up with a 1-tap recovery link at breakfast, preserving brand goodwill & TRAI compliance.</p>
+              <button type="button" onclick="openWhatsAppModal()" class="mt-2 text-xs font-semibold px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 flex items-center space-x-1.5 transition">
+                <i class="fa-brands fa-whatsapp text-emerald-400"></i>
+                <span>View Queued WhatsApp Notification Preview</span>
+              </button>
+            </div>
+
+            <div class="pt-1.5 text-[11px] text-slate-300 bg-slate-950/60 p-2 rounded border border-slate-800/80">
+              <span class="text-slate-400 block font-semibold mb-0.5">AI Reasoning:</span>
+              <p id="simResReasoning" class="italic text-slate-300"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Visual Charts & Comparisons (7 Cols) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Strategy Comparison & Uplift Panel -->
+        <div class="glass-panel rounded-xl p-5 border border-brand-border">
+          <h2 class="text-base font-semibold text-white flex items-center space-x-2 mb-3">
+            <i class="fa-solid fa-chart-column text-emerald-400"></i>
+            <span>Recovery Comparison: Naive Dunning vs. Autonomous AI Agent</span>
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div class="h-44 relative">
+              <canvas id="comparisonChart"></canvas>
+            </div>
+            <div class="space-y-2 text-xs">
+              <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                <div class="font-semibold text-rose-400">Baseline Dumb Retry Policy</div>
+                <div class="text-slate-300 mt-0.5">Recovered: <span class="font-bold text-white">₹16,700 (6.4%)</span></div>
+                <div class="text-slate-400 text-[11px]">13 nocturnal TRAI violations, hammered failing bank switches.</div>
+              </div>
+
+              <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <div class="font-semibold text-emerald-400">Autonomous AI Recovery Agent</div>
+                <div class="text-slate-300 mt-0.5">Recovered: <span class="font-bold text-white">₹1,62,300 (61.8%)</span></div>
+                <div class="text-emerald-300 text-[11px] font-medium">+₹1,45,600 net revenue uplift, 0 double debits, 0 violations.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cohort Category Conversion Breakdown -->
+        <div class="glass-panel rounded-xl p-5 border border-brand-border">
+          <h2 class="text-base font-semibold text-white flex items-center space-x-2 mb-3">
+            <i class="fa-solid fa-pie-chart text-brand-cyan"></i>
+            <span>Recovery Rate by Root-Cause Category</span>
+          </h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-xs">
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <div class="text-slate-400">Transient Outage</div>
+              <div class="text-lg font-bold text-emerald-400 mt-1">89.8%</div>
+              <div class="text-[10px] text-slate-500">22 of 25 Rec. (+12h Cooldown)</div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <div class="text-slate-400">Actionable Soft</div>
+              <div class="text-lg font-bold text-purple-400 mt-1">59.0%</div>
+              <div class="text-[10px] text-slate-500">12 of 20 Rec. (UPI Fallback)</div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <div class="text-slate-400">Exhausted Retries</div>
+              <div class="text-lg font-bold text-amber-400 mt-1">0.0%</div>
+              <div class="text-[10px] text-slate-500">7 of 7 Stopped (Attempt >= 2)</div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+              <div class="text-slate-400">Terminal Failures</div>
+              <div class="text-lg font-bold text-rose-400 mt-1">0.0%</div>
+              <div class="text-[10px] text-slate-500">8 of 8 Gracefully Aborted</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Cohort Transactions Explorer Table -->
+    <div class="glass-panel rounded-xl p-5 border border-brand-border">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-list-check text-brand-blue"></i>
+            <span>Benchmark Transactions Explorer (60 Webhooks)</span>
+          </h2>
+          <p class="text-xs text-slate-400">Full cohort trace showing classification, guardrail verdict, and recovery conversion</p>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <!-- Search input -->
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+            <input type="text" id="txSearch" oninput="filterTransactions()" placeholder="Search invoice, error code..." class="bg-slate-900/90 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-brand-blue w-56">
+          </div>
+
+          <!-- Category filter -->
+          <select id="catFilter" onchange="filterTransactions()" class="bg-slate-900/90 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+            <option value="ALL">All Categories</option>
+            <option value="TRANSIENT_DOWNTIME">Transient Downtime (25)</option>
+            <option value="CUSTOMER_ACTIONABLE">Customer Actionable (20)</option>
+            <option value="EXHAUSTED_LIMIT">Exhausted Retries (7)</option>
+            <option value="TERMINAL_FAILURE">Terminal Failures (8)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="overflow-x-auto rounded-lg border border-slate-800 max-h-96">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-900/90 text-slate-300 font-semibold border-b border-slate-800 sticky top-0 z-10">
+            <tr>
+              <th class="py-2.5 px-3">Invoice ID</th>
+              <th class="py-2.5 px-3">Customer</th>
+              <th class="py-2.5 px-3 text-right">Amount</th>
+              <th class="py-2.5 px-3">Rail</th>
+              <th class="py-2.5 px-3">Error Code</th>
+              <th class="py-2.5 px-3">Guards</th>
+              <th class="py-2.5 px-3">Agent Action</th>
+              <th class="py-2.5 px-3 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="txTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between text-xs text-slate-400 mt-3">
+        <div>Showing <span id="txShowingCount" class="font-bold text-white">60</span> of 60 records</div>
+        <div class="italic text-[11px]">Click any row to test in Webhook Simulator</div>
+      </div>
+    </div>
+
+    <!-- Live Audit Trail Log Feed -->
+    <div class="glass-panel rounded-xl p-5 border border-brand-border">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-terminal text-purple-400"></i>
+          <span>Live Microsecond Audit Trail Log (recovery_audit_trail.jsonl)</span>
+        </h2>
+        <span class="text-xs text-slate-400 font-mono" id="auditCount">Latest 50 events</span>
+      </div>
+      <div id="auditLogStream" class="h-44 overflow-y-auto bg-slate-950/80 rounded-lg p-3 font-mono text-[11px] text-slate-400 space-y-1 border border-slate-800">
+        <!-- Log lines dynamically injected -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Razorpay Customer Dynamic Recovery Checkout Modal -->
+  <div id="checkoutModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-700 to-cyan-600 p-4 text-white flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-bolt text-white"></i>
+          </div>
+          <div>
+            <div class="font-bold text-sm">Razorpay Checkout</div>
+            <div class="text-[11px] text-blue-100">Acme SaaS Subscriptions</div>
+          </div>
+        </div>
+        <button onclick="closeCheckoutModal()" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Checkout Body: Interactive Form State -->
+      <div id="checkoutFormState" class="p-5 space-y-4 text-xs">
+        <!-- Invoice summary -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <span class="text-slate-400 block text-[11px]">Invoice Reference</span>
+            <span id="mInvId" class="font-mono font-bold text-white text-sm">INV-SIM-8001</span>
+          </div>
+          <div class="text-right">
+            <span class="text-slate-400 block text-[11px]">Total Due</span>
+            <span id="mAmt" class="font-mono font-bold text-emerald-400 text-lg">₹3,500.00</span>
+          </div>
+        </div>
+
+        <!-- Failure Diagnosis Warning -->
+        <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300">
+          <div class="font-semibold flex items-center space-x-1.5 text-[11px]">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Prior Attempt Failed</span>
+          </div>
+          <p class="text-[11px] text-slate-300 mt-0.5">
+            Your prior auto-debit on <strong id="mFailedRail" class="text-white">CARD</strong> failed (<span id="mFailedErr" class="font-mono text-rose-300">INSUFFICIENT_FUNDS</span>).
+          </p>
+        </div>
+
+        <!-- AI Dynamic Multi-Rail Recommendation -->
+        <div class="p-3 rounded-xl bg-brand-blue/10 border border-brand-cyan/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-brand-cyan flex items-center space-x-1.5 text-xs">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>AI Recommended Smart Fallback</span>
+            </span>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">1-TAP CLEAR</span>
+          </div>
+          <p class="text-slate-300 text-[11px]">
+            To bypass bank limits and avoid subscription pause, pay instantly using <strong>UPI Intent</strong>:
+          </p>
+
+          <!-- UPI App Selectors -->
+          <div class="grid grid-cols-4 gap-2 pt-1">
+            <button type="button" onclick="simulateCheckoutSuccess()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center justify-center text-[10px] text-slate-300 transition">
+              <i class="fa-brands fa-google text-blue-400 text-base mb-1"></i>
+              <span>GPay</span>
+            </button>
+            <button type="button" onclick="simulateCheckoutSuccess()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center justify-center text-[10px] text-slate-300 transition">
+              <i class="fa-solid fa-mobile text-purple-400 text-base mb-1"></i>
+              <span>PhonePe</span>
+            </button>
+            <button type="button" onclick="simulateCheckoutSuccess()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center justify-center text-[10px] text-slate-300 transition">
+              <i class="fa-solid fa-wallet text-cyan-400 text-base mb-1"></i>
+              <span>Paytm</span>
+            </button>
+            <button type="button" onclick="simulateCheckoutSuccess()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center justify-center text-[10px] text-slate-300 transition">
+              <i class="fa-solid fa-qrcode text-emerald-400 text-base mb-1"></i>
+              <span>QR Code</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pay Button -->
+        <button onclick="simulateCheckoutSuccess()" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 text-white font-bold text-xs tracking-wide transition shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-shield-check text-sm"></i>
+          <span>Complete Recovery via UPI Intent</span>
+        </button>
+
+        <div class="text-[10px] text-center text-slate-500 flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-lock"></i>
+          <span>Secured by Razorpay 256-bit PCI-DSS Compliance</span>
+        </div>
+      </div>
+
+      <!-- Checkout Success State -->
+      <div id="checkoutSuccessState" class="hidden p-8 text-center space-y-4">
+        <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto animate-bounce">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-lg text-white">Payment Recovered Successfully!</h3>
+          <p class="text-xs text-slate-300 mt-1">Transaction reconciled via UPI Intent. Subscription kept active with zero disruption.</p>
+        </div>
+        <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800 text-left font-mono text-[11px] text-slate-400 space-y-1">
+          <div class="flex justify-between"><span>Status:</span><span class="text-emerald-400 font-bold">RECOVERED</span></div>
+          <div class="flex justify-between"><span>Settlement Rail:</span><span class="text-brand-cyan">UPI (NPCI Intent)</span></div>
+          <div class="flex justify-between"><span>Bank Payout UTR:</span><span class="text-slate-200">UTR-99281746201</span></div>
+        </div>
+        <button onclick="closeCheckoutModal()" class="w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition">
+          Return to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp Daybreak Compliant Dispatch Preview Modal -->
+  <div id="whatsappModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl relative font-sans">
+      <!-- WhatsApp Header -->
+      <div class="bg-[#075E54] p-3 text-white flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold">
+            <i class="fa-brands fa-whatsapp text-xl text-white"></i>
+          </div>
+          <div>
+            <div class="font-bold text-xs flex items-center space-x-1">
+              <span>Razorpay Payments</span>
+              <i class="fa-solid fa-circle-check text-cyan-300 text-[10px]"></i>
+            </div>
+            <div class="text-[10px] text-emerald-100">Official Business Account</div>
+          </div>
+        </div>
+        <button onclick="closeWhatsAppModal()" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Chat Bubble Container -->
+      <div class="p-4 bg-[#0B141A] space-y-3 min-h-[260px] flex flex-col justify-end">
+        <div class="text-center">
+          <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">TODAY, 08:01 AM (TRAI Compliant)</span>
+        </div>
+
+        <div class="p-3 rounded-xl rounded-tl-none bg-[#202C33] text-slate-100 text-xs shadow space-y-2 border border-slate-800">
+          <p>
+            Hello Priya! 👋<br>
+            Your monthly subscription payment of <strong id="waAmt" class="text-emerald-400 font-mono">₹3,500.00</strong> for invoice <strong id="waInv" class="font-mono text-cyan-300">INV-SIM-8001</strong> could not be cleared last night due to insufficient balance on your card.
+          </p>
+          <p class="text-[11px] text-slate-300">
+            To prevent subscription pause, please complete payment in 1-tap via your preferred UPI app:
+          </p>
+
+          <!-- WhatsApp CTA Button -->
+          <div class="pt-1 border-t border-slate-700/80">
+            <button onclick="closeWhatsAppModal(); openCheckoutModal();" class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition">
+              <i class="fa-solid fa-bolt text-yellow-300"></i>
+              <span>Pay with UPI Intent in 1-Tap</span>
+            </button>
+          </div>
+          <div class="text-[9px] text-right text-slate-400">08:01 AM ✓✓</div>
+        </div>
+      </div>
+
+      <!-- WhatsApp Footer Note -->
+      <div class="p-3 bg-slate-900 border-t border-slate-800 text-[10px] text-center text-slate-400">
+        <i class="fa-solid fa-shield text-emerald-400 mr-1"></i>
+        Outbound notification queued during night; dispatched at 08:01 AM IST per TRAI norms.
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-brand-border py-6 text-center text-xs text-slate-500">
+    Razorpay Buildathon — AI Revenue Recovery Engine | Built with LangGraph, Pydantic & FastAPI
+  </footer>
+
+  <script>
+    let globalEvents = [];
+    let comparisonChartInstance = null;
+
+    function updateHourDisplay(val) {
+      const h = parseInt(val);
+      const str = h.toString().padStart(2, '0') + ':00';
+      document.getElementById('simHourVal').innerText = str;
+    }
+
+    function updateErrorDesc() {
+      // Auto update description if needed
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/benchmark-summary');
+        const data = await res.json();
+        renderKPIs(data.kpis);
+        renderChart(data.kpis);
+        globalEvents = data.events;
+        renderTable(globalEvents);
+      } catch (err) {
+        console.error("Error loading benchmark summary:", err);
+      }
+
+      fetchAuditTrail();
+    }
+
+    function renderKPIs(kpis) {
+      document.getElementById('kpiAtRisk').innerText = '₹' + kpis.total_at_risk.toLocaleString('en-IN', {minimumFractionDigits: 2});
+      document.getElementById('kpiRecovered').innerText = '₹' + kpis.total_recovered.toLocaleString('en-IN', {minimumFractionDigits: 2});
+      document.getElementById('kpiRecoveryPct').innerText = kpis.recovery_percentage + '%';
+      document.getElementById('kpiUplift').innerText = '+₹' + kpis.net_uplift.toLocaleString('en-IN', {minimumFractionDigits: 2});
+      document.getElementById('kpiBaselinePct').innerText = kpis.baseline_percentage + '%';
+      document.getElementById('kpiTxCount').innerText = kpis.total_transactions;
+    }
+
+    function renderChart(kpis) {
+      const ctx = document.getElementById('comparisonChart').getContext('2d');
+      if (comparisonChartInstance) {
+        comparisonChartInstance.destroy();
+      }
+
+      comparisonChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Naive Baseline Retries', 'Autonomous AI Engine'],
+          datasets: [{
+            label: 'Recovered Revenue (INR)',
+            data: [kpis.baseline_recovered, kpis.total_recovered],
+            backgroundColor: ['rgba(244, 63, 94, 0.75)', 'rgba(16, 185, 129, 0.85)'],
+            borderColor: ['#F43F5E', '#10B981'],
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return ' ₹' + context.raw.toLocaleString('en-IN', {minimumFractionDigits: 2});
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: '#94a3b8',
+                callback: function(value) { return '₹' + (value / 1000) + 'k'; }
+              }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#cbd5e1', font: { weight: 'bold' } }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTable(events) {
+      const tbody = document.getElementById('txTableBody');
+      tbody.innerHTML = '';
+
+      events.forEach(ev => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 cursor-pointer transition';
+        tr.onclick = () => loadEventIntoSimulator(ev);
+
+        let statusBadge = '';
+        if (ev.recovery_status === 'RECOVERED') {
+          statusBadge = '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px]">RECOVERED</span>';
+        } else if (ev.recovery_status === 'RETRY_SCHEDULED') {
+          statusBadge = '<span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px]">RETRY_SCHEDULED</span>';
+        } else if (ev.recovery_status === 'LINK_DISPATCHED') {
+          statusBadge = '<span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 text-[10px]">LINK_DISPATCHED</span>';
+        } else if (ev.recovery_status === 'ABORTED_MAX_RETRIES') {
+          statusBadge = '<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px]">ABORTED_MAX_RETRIES</span>';
+        } else {
+          statusBadge = '<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px]">ABORTED</span>';
+        }
+
+        let guardBadge = ev.guard_passed 
+          ? '<span class="text-emerald-400 text-[11px]"><i class="fa-solid fa-check"></i> Passed</span>'
+          : '<span class="text-rose-400 text-[11px]"><i class="fa-solid fa-xmark"></i> Blocked</span>';
+
+        let actionText = ev.recovery_plan?.action || 'ABORT_TERMINAL';
+        if (actionText === 'SCHEDULED_SILENT_RETRY') {
+          actionText = '<span class="text-blue-300">Silent Retry (+12h)</span>';
+        } else if (actionText === 'DISPATCH_DYNAMIC_LINK') {
+          actionText = '<span class="text-purple-300">Dynamic Link (UPI)</span>';
+        } else {
+          actionText = '<span class="text-rose-300">Abort & Flag</span>';
+        }
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-semibold text-white">${ev.invoice_id}</td>
+          <td class="py-2.5 px-3 text-slate-400">${ev.customer_id}</td>
+          <td class="py-2.5 px-3 text-right font-semibold text-white">₹${ev.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+          <td class="py-2.5 px-3 text-amber-300">${ev.payment_rail}</td>
+          <td class="py-2.5 px-3 text-slate-300 font-sans">${ev.error_code}</td>
+          <td class="py-2.5 px-3">${guardBadge}</td>
+          <td class="py-2.5 px-3 font-sans">${actionText}</td>
+          <td class="py-2.5 px-3 text-center">${statusBadge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('txShowingCount').innerText = events.length;
+    }
+
+    function filterTransactions() {
+      const q = document.getElementById('txSearch').value.toLowerCase();
+      const cat = document.getElementById('catFilter').value;
+
+      const filtered = globalEvents.filter(ev => {
+        const matchesQuery = ev.invoice_id.toLowerCase().includes(q) ||
+                             ev.customer_id.toLowerCase().includes(q) ||
+                             ev.error_code.toLowerCase().includes(q) ||
+                             ev.payment_rail.toLowerCase().includes(q);
+
+        const matchesCat = cat === 'ALL' || ev.category === cat;
+        return matchesQuery && matchesCat;
+      });
+
+      renderTable(filtered);
+    }
+
+    function loadEventIntoSimulator(ev) {
+      document.getElementById('simInvoiceId').value = ev.invoice_id;
+      document.getElementById('simCustomerId').value = ev.customer_id;
+      document.getElementById('simAmount').value = ev.amount;
+      document.getElementById('simRail').value = ev.payment_rail;
+      document.getElementById('simErrorCode').value = ev.error_code;
+      document.getElementById('simAttemptCount').value = ev.attempt_count;
+      document.getElementById('attemptCountVal').innerText = ev.attempt_count;
+      window.scrollTo({ top: 350, behavior: 'smooth' });
+    }
+
+    async function handleSimulate(e) {
+      e.preventDefault();
+      const btn = document.getElementById('simBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Agent Thinking...</span>';
+
+      // Pulse nodes visually
+      const nodeDiagnose = document.getElementById('nodeDiagnose');
+      const nodeGuard = document.getElementById('nodeGuard');
+      const nodeExecution = document.getElementById('nodeExecution');
+
+      nodeDiagnose.classList.add('node-active');
+      await new Promise(r => setTimeout(r, 250));
+      nodeGuard.classList.add('node-active');
+      await new Promise(r => setTimeout(r, 250));
+      nodeExecution.classList.add('node-active');
+
+      const payload = {
+        invoice_id: document.getElementById('simInvoiceId').value,
+        customer_id: document.getElementById('simCustomerId').value,
+        amount: parseFloat(document.getElementById('simAmount').value),
+        payment_rail: document.getElementById('simRail').value,
+        error_code: document.getElementById('simErrorCode').value,
+        error_description: document.getElementById('simErrorCode').options[document.getElementById('simErrorCode').selectedIndex].text,
+        attempt_count: parseInt(document.getElementById('simAttemptCount').value),
+        current_hour_ist: parseInt(document.getElementById('simHour').value),
+        is_locked: document.getElementById('simIsLocked').checked,
+      };
+
+      try {
+        const res = await fetch('/api/simulate-recovery', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        displaySimResult(data);
+        fetchAuditTrail();
+      } catch (err) {
+        alert("Error executing simulator: " + err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-play"></i><span>Execute AI Recovery Agent</span>';
+        setTimeout(() => {
+          nodeDiagnose.classList.remove('node-active');
+          nodeGuard.classList.remove('node-active');
+          nodeExecution.classList.remove('node-active');
+        }, 1000);
+      }
+    }
+
+    function displaySimResult(data) {
+      const box = document.getElementById('simResultBox');
+      box.classList.remove('hidden');
+
+      const badge = document.getElementById('simResultStatusBadge');
+      const icon = document.getElementById('simResultIcon');
+
+      if (data.recovery_status === 'RECOVERED') {
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        badge.innerText = 'RECOVERED (Success)';
+        icon.className = 'fa-solid fa-circle-check text-emerald-400';
+      } else if (data.recovery_status === 'RETRY_SCHEDULED') {
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30';
+        badge.innerText = 'RETRY_SCHEDULED (+12h)';
+        icon.className = 'fa-solid fa-clock text-blue-400';
+      } else if (data.recovery_status === 'LINK_DISPATCHED') {
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold font-mono bg-purple-500/20 text-purple-400 border border-purple-500/30';
+        badge.innerText = 'LINK_DISPATCHED';
+        icon.className = 'fa-solid fa-paper-plane text-purple-400';
+      } else {
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold font-mono bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        badge.innerText = data.recovery_status || 'ABORTED';
+        icon.className = 'fa-solid fa-circle-xmark text-rose-400';
+      }
+
+      document.getElementById('simResCategory').innerText = data.failure_category;
+      document.getElementById('simResGuard').innerHTML = data.guard_passed 
+        ? '<span class="text-emerald-400">PASSED</span>'
+        : `<span class="text-rose-400 font-bold">REJECTED (${data.guard_message})</span>`;
+
+      document.getElementById('simResAction').innerText = data.recovery_plan?.action || 'ABORT_TERMINAL';
+      document.getElementById('simResReasoning').innerText = data.recovery_plan?.reasoning || 'No recovery action possible.';
+
+      const linkRow = document.getElementById('simResFallbackRow');
+      const nightQueueRow = document.getElementById('simResNightQueueRow');
+
+      if (data.recovery_plan?.dynamic_link) {
+        linkRow.classList.remove('hidden');
+        const a = document.getElementById('simResLink');
+        a.href = data.recovery_plan.dynamic_link;
+        a.innerText = data.recovery_plan.dynamic_link;
+      } else {
+        linkRow.classList.add('hidden');
+      }
+
+      // Check if nocturnal anti-spam queue is active
+      if (data.current_hour_ist < 8 || data.current_hour_ist >= 20) {
+        if (data.failure_category === 'CUSTOMER_ACTIONABLE' || (data.guard_message && data.guard_message.includes('COMPLIANCE_WINDOW'))) {
+          nightQueueRow.classList.remove('hidden');
+        } else {
+          nightQueueRow.classList.add('hidden');
+        }
+      } else {
+        nightQueueRow.classList.add('hidden');
+      }
+    }
+
+    // Modal Control Functions
+    function openCheckoutModal() {
+      const inv = document.getElementById('simInvoiceId').value;
+      const amt = document.getElementById('simAmount').value;
+      const rail = document.getElementById('simRail').value;
+      const err = document.getElementById('simErrorCode').value;
+
+      document.getElementById('mInvId').innerText = inv;
+      document.getElementById('mAmt').innerText = '₹' + parseFloat(amt).toLocaleString('en-IN', {minimumFractionDigits: 2});
+      document.getElementById('mFailedRail').innerText = rail;
+      document.getElementById('mFailedErr').innerText = err;
+      document.getElementById('checkoutModal').classList.remove('hidden');
+    }
+
+    function closeCheckoutModal() {
+      document.getElementById('checkoutModal').classList.add('hidden');
+      document.getElementById('checkoutSuccessState').classList.add('hidden');
+      document.getElementById('checkoutFormState').classList.remove('hidden');
+    }
+
+    function simulateCheckoutSuccess() {
+      const form = document.getElementById('checkoutFormState');
+      const success = document.getElementById('checkoutSuccessState');
+      form.classList.add('hidden');
+      success.classList.remove('hidden');
+      setTimeout(() => {
+        fetchAuditTrail();
+      }, 500);
+    }
+
+    function openWhatsAppModal() {
+      const inv = document.getElementById('simInvoiceId').value;
+      const amt = document.getElementById('simAmount').value;
+      document.getElementById('waInv').innerText = inv;
+      document.getElementById('waAmt').innerText = '₹' + parseFloat(amt).toLocaleString('en-IN', {minimumFractionDigits: 2});
+      document.getElementById('whatsappModal').classList.remove('hidden');
+    }
+
+    function closeWhatsAppModal() {
+      document.getElementById('whatsappModal').classList.add('hidden');
+    }
+
+
+    async function fetchAuditTrail() {
+      try {
+        const res = await fetch('/api/audit-trail?limit=30');
+        const data = await res.json();
+        const container = document.getElementById('auditLogStream');
+        container.innerHTML = '';
+        data.records.reverse().forEach(rec => {
+          const div = document.createElement('div');
+          const time = rec.timestamp.split('T')[1].replace('Z', '');
+          let color = rec.guard_check_passed ? 'text-emerald-400' : 'text-rose-400';
+          div.innerHTML = `<span class="text-slate-500">[${time}]</span> <span class="font-bold text-white">${rec.invoice_id}</span> | <span class="text-brand-cyan">${rec.event_type}</span> &rarr; <span class="${color}">${rec.action}</span> <span class="text-slate-500">${JSON.stringify(rec.details)}</span>`;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Error fetching audit trail:", err);
+      }
+    }
+
+    async function runLiveStressTest() {
+      const btn = document.getElementById('stressTestBtn');
+      const icon = document.getElementById('stressTestIcon');
+      btn.disabled = true;
+      icon.className = 'fa-solid fa-spinner fa-spin';
+      btn.classList.add('opacity-75');
+
+      const n1 = document.getElementById('nodeDiagnose');
+      const n2 = document.getElementById('nodeGuard');
+      const n3 = document.getElementById('nodeExecution');
+      const n4 = document.getElementById('nodeAudit');
+
+      // Sequence through nodes with glowing pulse
+      n1.classList.add('node-active');
+      await new Promise(r => setTimeout(r, 200));
+      n2.classList.add('node-active');
+      await new Promise(r => setTimeout(r, 200));
+      n3.classList.add('node-active');
+      await new Promise(r => setTimeout(r, 200));
+      n4.classList.add('node-active');
+
+      await fetchData();
+
+      setTimeout(() => {
+        n1.classList.remove('node-active');
+        n2.classList.remove('node-active');
+        n3.classList.remove('node-active');
+        n4.classList.remove('node-active');
+        btn.disabled = false;
+        icon.className = 'fa-solid fa-bolt';
+        btn.classList.remove('opacity-75');
+      }, 700);
+    }
+
+    function updateRealTimeISTClock() {
+      const now = new Date();
+      // Format to Asia/Kolkata timezone with 2-digit hour, minute, second
+      const timeStr = new Intl.DateTimeFormat('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(now);
+
+      const clockEl = document.getElementById('liveClock');
+      if (clockEl) {
+        clockEl.innerText = timeStr + ' IST';
+      }
+
+      // Check hour in IST for regulatory compliance window (08:00 to 20:00)
+      const istHour = parseInt(new Intl.DateTimeFormat('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: 'numeric',
+        hour12: false
+      }).format(now));
+
+      const badge = document.getElementById('traiBadge');
+      const dot = document.getElementById('traiDot');
+      if (badge && dot) {
+        if (istHour >= 8 && istHour < 20) {
+          badge.className = 'text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium';
+          badge.innerText = 'TRAI Compliant Hours (08:00–20:00)';
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+        } else {
+          badge.className = 'text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium';
+          badge.innerText = 'Night Cooldown (08:00–20:00 Closed)';
+          dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        }
+      }
+    }
+
+    // Update immediately and sync every second
+    updateRealTimeISTClock();
+    setInterval(updateRealTimeISTClock, 1000);
+
+    // Initialize on load
+    fetchData();
+  </script>
+</body>
+</html>

@@ -282,7 +282,6 @@ The project includes an enterprise-grade **Next.js 14** web application powered 
 The repository includes a comprehensive Pytest test suite covering all 5 core invariants:
 
 ```bash
-cd revenue_recovery_agent
 python -m pytest tests/ -v
 ```
 
@@ -360,47 +359,46 @@ npm run dev
 ## 12. Repository Structure
 
 ```text
-razorpay-track-03/
-└── revenue_recovery_agent/
-    ├── data/
-    │   ├── __init__.py
-    │   ├── generate_batch.py              # Benchmark cohort generator (60 failure events)
-    │   └── failed_payments_batch_60.json   # Benchmark JSON dataset
-    ├── core/
-    │   ├── __init__.py
-    │   ├── models.py                      # Strict Pydantic schemas (Exact Decimal precision) & Enums
-    │   └── policy.py                      # Deterministic guardrails (TRAI hours, Max retries, Idempotency)
-    ├── agent/
-    │   ├── __init__.py
-    │   ├── state.py                       # LangGraph TypedDict with operator.add reducers
-    │   ├── nodes.py                       # Diagnose, Policy Guard, Execution & Simulator nodes
-    │   └── graph.py                       # LangGraph StateGraph orchestration
-    ├── audit/
-    │   ├── __init__.py
-    │   └── logger.py                      # Thread-safe atomic microsecond JSONL logger
-    ├── tests/
-    │   ├── __init__.py
-    │   └── test_recovery.py               # Comprehensive Pytest test cases & financial invariants
-    ├── frontend/                          # Next.js 14 + Three.js 3D Dashboard Application
-    │   ├── app/
-    │   │   ├── layout.tsx                 # Root layout & dark-mode theme wrapper
-    │   │   ├── globals.css                # Tailwind glass-panel and glowing pulse styles
-    │   │   └── page.tsx                   # Master interactive executive recovery dashboard
-    │   ├── components/
-    │   │   ├── ThreeVisualizer.tsx        # Three.js 3D Financial Network & Rail Topology Canvas
-    │   │   ├── CheckoutModal.tsx          # Dynamic Customer Recovery Checkout Sheet (UPI Intent / QR)
-    │   │   └── WhatsAppModal.tsx          # TRAI-Compliant Daybreak Outreach Preview Modal
-    │   ├── lib/
-    │   │   ├── types.ts                   # Strict TypeScript interfaces & API models
-    │   │   └── mockData.ts                # Instant hydration datasets & offline fallback
-    │   ├── package.json                   # Dependencies: next 14, three, lucide-react, tailwindcss
-    │   └── tsconfig.json                  # Strict TypeScript configuration
-    ├── run_recovery_pipeline.py           # CLI benchmark application & rich executive tables
-    ├── app.py                             # FastAPI backend & live simulation server
-    ├── static/
-    │   └── index.html                     # Standalone Web Dashboard & State Machine Visualizer
-    ├── requirements.txt                   # Production Python dependencies
-    └── README.md                          # Comprehensive architecture, benchmark & setup documentation
+revenue_recovery_agent/
+├── data/
+│   ├── __init__.py
+│   ├── generate_batch.py              # Benchmark cohort generator (60 failure events)
+│   └── failed_payments_batch_60.json   # Benchmark JSON dataset
+├── core/
+│   ├── __init__.py
+│   ├── models.py                      # Strict Pydantic schemas (Exact Decimal precision) & Enums
+│   └── policy.py                      # Deterministic guardrails (TRAI hours, Max retries, Idempotency)
+├── agent/
+│   ├── __init__.py
+│   ├── state.py                       # LangGraph TypedDict with operator.add reducers
+│   ├── nodes.py                       # Diagnose, Policy Guard, Execution & Simulator nodes
+│   └── graph.py                       # LangGraph StateGraph orchestration
+├── audit/
+│   ├── __init__.py
+│   └── logger.py                      # Thread-safe atomic microsecond JSONL logger
+├── tests/
+│   ├── __init__.py
+│   └── test_recovery.py               # Comprehensive Pytest test cases & financial invariants
+├── frontend/                          # Next.js 14 + Three.js 3D Dashboard Application
+│   ├── app/
+│   │   ├── layout.tsx                 # Root layout & dark-mode theme wrapper
+│   │   ├── globals.css                # Tailwind glass-panel and glowing pulse styles
+│   │   └── page.tsx                   # Master interactive executive recovery dashboard
+│   ├── components/
+│   │   ├── ThreeVisualizer.tsx        # Three.js 3D Financial Network & Rail Topology Canvas
+│   │   ├── CheckoutModal.tsx          # Dynamic Customer Recovery Checkout Sheet (UPI Intent / QR)
+│   │   └── WhatsAppModal.tsx          # TRAI-Compliant Daybreak Outreach Preview Modal
+│   ├── lib/
+│   │   ├── types.ts                   # Strict TypeScript interfaces & API models
+│   │   └── mockData.ts                # Instant hydration datasets & offline fallback
+│   ├── package.json                   # Dependencies: next 14, three, lucide-react, tailwindcss
+│   └── tsconfig.json                  # Strict TypeScript configuration
+├── run_recovery_pipeline.py           # CLI benchmark application & rich executive tables
+├── app.py                             # FastAPI backend & live simulation server
+├── static/
+│   └── index.html                     # Standalone Web Dashboard & State Machine Visualizer
+├── requirements.txt                   # Production Python dependencies
+└── README.md                          # Comprehensive architecture, benchmark & setup documentation
 ```
 
 ---
